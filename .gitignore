@@ -1,0 +1,9 @@
+# Binary
+photo2cas
+
+# Output files
+*.au
+*.cas
+
+# OS generated files
+.DS_Store
