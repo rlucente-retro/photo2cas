@@ -1,10 +1,13 @@
 package main
 
 import (
+	"bytes"
+	"encoding/binary"
 	"image"
 	"image/color"
 	_ "image/jpeg"
-	_ "image/png"
+	"image/png"
+	"io"
 	"os"
 )
 
@@ -66,17 +69,79 @@ func distributeError(img *image.Gray, x, y int, err int16) {
 }
 
 // loadImage reads and decodes an image from a file path.
+// It includes a workaround for Go's strict PNG decoder, which can fail on 
+// non-essential metadata chunks (like iCCP) with invalid checksums.
 func loadImage(filepath string) (image.Image, error) {
 	infile, err := os.Open(filepath)
 	if err != nil {
 		return nil, err
 	}
 	defer infile.Close()
+
+	// Use a peek-like approach to check if it's a PNG
+	header := make([]byte, 8)
+	if n, _ := infile.Read(header); n == 8 && isPNG(header) {
+		infile.Seek(0, io.SeekStart)
+		return decodeSafePNG(infile)
+	}
+
+	// Fallback to standard decoding for other formats
+	infile.Seek(0, io.SeekStart)
 	img, _, err := image.Decode(infile)
-	if err != nil {
+	return img, err
+}
+
+func isPNG(header []byte) bool {
+	return bytes.Equal(header, []byte("\x89PNG\r\n\x1a\n"))
+}
+
+// decodeSafePNG filters out problematic chunks (like iCCP) that might have 
+// invalid checksums, which Go's standard decoder is strict about.
+func decodeSafePNG(r io.Reader) (image.Image, error) {
+	var filtered bytes.Buffer
+	header := make([]byte, 8)
+	if _, err := io.ReadFull(r, header); err != nil {
 		return nil, err
 	}
-	return img, nil
+	filtered.Write(header)
+
+	for {
+		var length uint32
+		if err := binary.Read(r, binary.BigEndian, &length); err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, err
+		}
+
+		chunkType := make([]byte, 4)
+		if _, err := io.ReadFull(r, chunkType); err != nil {
+			return nil, err
+		}
+
+		// Skip chunks that are known to often have CRC issues or are unnecessary
+		if string(chunkType) == "iCCP" {
+			if _, err := io.CopyN(io.Discard, r, int64(length)+4); err != nil {
+				return nil, err
+			}
+			continue
+		}
+
+		// Write length and type
+		binary.Write(&filtered, binary.BigEndian, length)
+		filtered.Write(chunkType)
+
+		// Copy data and CRC
+		if _, err := io.CopyN(&filtered, r, int64(length)+4); err != nil {
+			return nil, err
+		}
+
+		if string(chunkType) == "IEND" {
+			break
+		}
+	}
+
+	return png.Decode(&filtered)
 }
 
 // packImage converts a 1-bit-per-pixel image into a byte array suitable for the CoCo PMODE 4.
