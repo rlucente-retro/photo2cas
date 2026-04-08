@@ -62,7 +62,7 @@ You can specify custom output filenames using flags:
 1. Connect your computer's audio output to the CoCo's cassette "Data In" port.
 2. On the CoCo, enter the following BASIC program:
    ```basic
-   10 PMODE 4,1:SCREEN 1,1:PCLS
+   10 PMODE 4,1:SCREEN 1,0:PCLS
    20 CLOADM:EXEC
    30 GOTO 30
    ```
