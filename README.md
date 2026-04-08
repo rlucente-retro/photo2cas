@@ -25,7 +25,7 @@
 ## Prerequisites
 
 - [Go](https://go.dev/doc/install) (1.18 or higher recommended)
-- An image file (JPG, PNG)
+- A PNG image file
 
 ## Installation
 
@@ -40,7 +40,7 @@
 Run the application by providing the path to an image:
 
 ```bash
-./photo2cas path/to/your/image.jpg
+./photo2cas path/to/your/image.png
 ```
 
 ### Options
