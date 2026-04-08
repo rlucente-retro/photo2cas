@@ -1,6 +1,9 @@
 # Binary
 photo2cas
 
+# Input files
+*.png
+
 # Output files
 *.au
 *.cas
