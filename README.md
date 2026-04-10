@@ -1,6 +1,6 @@
 # photo2cas
 
-`photo2cas` is a Go-based utility that converts modern images (JPEG, PNG, etc.) into a format compatible with the **TRS-80 Color Computer (CoCo)**. It processes images using dithering and outputs both a `.cas` (cassette binary) file and a `.au` (audio) file that can be "played" into a physical or emulated CoCo to display the image.
+`photo2cas` is a Go-based utility that converts modern images (PNG right now) into a format compatible with the **TRS-80 Color Computer (CoCo)**. It processes images using dithering and outputs both a `.cas` (cassette binary) file and a `.au` (audio) file that can be "played" into a physical or emulated CoCo to display the image.
 
 ## Features
 
